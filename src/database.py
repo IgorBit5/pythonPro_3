@@ -5,8 +5,9 @@ from datetime import datetime
 import redis
 import json
 import os
+from dotenv import load_dotenv
 
-
+load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL","postgresql://user:pass@localhost:5432/urlshortener")
 REDIS_URL = os.getenv("REDIS_URL","redis://localhost:6379/0")
 
