@@ -7,8 +7,8 @@ import json
 import os
 
 
-DATABASE_URL = os.getenv("DATABASE_URL","")
-REDIS_URL = os.getenv("REDIS_URL","")
+DATABASE_URL = os.getenv("DATABASE_URL","postgresql://user:pass@localhost:5432/urlshortener")
+REDIS_URL = os.getenv("REDIS_URL","redis://localhost:6379/0")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

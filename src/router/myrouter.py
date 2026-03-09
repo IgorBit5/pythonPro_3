@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import random
@@ -15,7 +15,7 @@ def create_link(data: LinkCreate, db: Session = Depends(get_db)):
     if data.original_url:
         exists = db.query(Link).filter(Link.original_url == data.original_url, Link.is_active == True).first()
         if exists:
-            raise HTTPException(400, "Такая на данный url уже существует")
+            raise HTTPException(400, "Такая сслыка на данный url уже существует")
          
     if data.custom_url:
         short_code = data.custom_url
@@ -127,18 +127,44 @@ def get_stats(short_code: str, db: Session = Depends(get_db)):
         "expires_at": link.expires_at
     }
 
-# 6. ПОИСК по оригинальному URL
-@router.get("/search")
-def search(original_url: str, db: Session = Depends(get_db)):
-    links = db.query(Link).filter(Link.original_url == original_url).all()
-    return [
-        {
-            "short_code": l.short_code,
-            "created_at": l.created_at,
-            "clicks": l.clicks,
-            "project": l.project
-        } for l in links
-    ]
+@router.get("/search/force")
+def search_force(original_url: str, db: Session = Depends(get_db)):
+    all_links = db.query(Link).all()
+
+    for link in all_links:
+        if link.original_url == original_url:
+            return {
+                "short_code": link.short_code,
+                "original_url": link.original_url,
+                "clicks": link.clicks,
+                "project": link.project,
+                "method": "python_loop"
+            }
+    
+    raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "Ссылка не найдена",
+            }
+        )
+
+
+@router.get("/debug/all")
+def get_all_links(db: Session = Depends(get_db)):
+    """Временный эндпоинт для отладки - показывает все ссылки"""
+    links = db.query(Link).all()
+    return {
+        "count": len(links),
+        "links": [
+            {
+                "id": link.id,
+                "original_url": link.original_url,
+                "short_code": link.short_code,
+                "project": link.project
+            }
+            for link in links
+        ]
+    }
 
 
 @router.post("/cleanup-unused")
